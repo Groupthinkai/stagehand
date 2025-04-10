@@ -29,6 +29,7 @@ export class OpenAICUAClient extends AgentClient {
   private actionHandler?: (action: AgentAction) => Promise<void>;
   private reasoningItems: Map<string, ResponseItem> = new Map();
   private environment: string = "browser"; // "browser", "mac", "windows", or "ubuntu"
+  private tools: object[] = [];
 
   constructor(
     type: AgentType,
@@ -43,6 +44,7 @@ export class OpenAICUAClient extends AgentClient {
       (clientOptions?.apiKey as string) || process.env.OPENAI_API_KEY || "";
     this.organization =
       (clientOptions?.organization as string) || process.env.OPENAI_ORG;
+    this.tools = (clientOptions?.tools as object[]) || [];
 
     // Get environment if specified
     if (
@@ -303,6 +305,7 @@ export class OpenAICUAClient extends AgentClient {
             display_height: this.currentViewport.height,
             environment: this.environment,
           },
+          ...this.tools,
         ],
         input: inputItems,
         truncation: "auto",
