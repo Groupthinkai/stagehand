@@ -259,7 +259,7 @@ export interface AgentConfig {
   /**
    * Custom action handler for the agent
    */
-  actionHandler?: (action: import('./agent').AgentAction) => Promise<void>;
+  actionHandler?: (action: import("./agent").AgentAction) => Promise<void>;
 }
 
 export enum StagehandFunctionName {

@@ -19,7 +19,9 @@ export class StagehandAgentHandler {
   private logger: (message: LogLine) => void;
   private agentClient: AgentClient;
   private options: AgentHandlerOptions;
-  public setActionHandler: (handler: (action: AgentAction) => Promise<void>) => void;
+  public setActionHandler: (
+    handler: (action: AgentAction) => Promise<void>,
+  ) => void;
 
   constructor(
     stagehandPage: StagehandPage,
@@ -48,7 +50,7 @@ export class StagehandAgentHandler {
 
     // Create agent with the client
     this.agent = new StagehandAgent(client, logger);
-    
+
     // Set initial actionHandler if provided in options
     if (options.actionHandler) {
       this.setActionHandler(options.actionHandler);
@@ -66,14 +68,16 @@ export class StagehandAgentHandler {
     });
 
     // Set up action handler for any client type
-    this.setActionHandler = (customHandler?: (action: AgentAction) => Promise<void>) => {
+    this.setActionHandler = (
+      customHandler?: (action: AgentAction) => Promise<void>,
+    ) => {
       this.agentClient.setActionHandler(async (action) => {
         // If a custom handler was provided, use it instead of the default
         if (customHandler) {
           await customHandler(action);
           return;
         }
-        
+
         // Default delay between actions (1 second if not specified)
         const defaultDelay = 1000;
         // Use specified delay or default
@@ -96,7 +100,9 @@ export class StagehandAgentHandler {
           await this.executeAction(action);
 
           // Add a delay after the action for better visibility
-          await new Promise((resolve) => setTimeout(resolve, waitBetweenActions));
+          await new Promise((resolve) =>
+            setTimeout(resolve, waitBetweenActions),
+          );
 
           // After executing an action, take a screenshot
           try {
@@ -123,7 +129,7 @@ export class StagehandAgentHandler {
         }
       });
     };
-    
+
     // Set the default action handler
     this.setActionHandler(undefined);
 
