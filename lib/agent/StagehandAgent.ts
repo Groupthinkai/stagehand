@@ -11,7 +11,7 @@ import { AgentClient } from "./AgentClient";
  * This class provides methods for executing tasks with an agent
  */
 export class StagehandAgent {
-  private client: AgentClient;
+  public client: AgentClient;
   private logger: (message: LogLine) => void;
 
   constructor(client: AgentClient, logger: (message: LogLine) => void) {
