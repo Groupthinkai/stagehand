@@ -256,6 +256,10 @@ export interface AgentConfig {
    * Additional options to pass to the agent client
    */
   options?: Record<string, unknown>;
+  /**
+   * Custom action handler for the agent
+   */
+  actionHandler?: (action: import('./agent').AgentAction) => Promise<void>;
 }
 
 export enum StagehandFunctionName {

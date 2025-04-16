@@ -47,6 +47,7 @@ export interface AgentHandlerOptions {
   clientOptions?: Record<string, unknown>;
   userProvidedInstructions?: string;
   agentType: AgentType;
+  actionHandler?: (action: AgentAction) => Promise<void>;
 }
 
 export interface ActionExecutionResult {

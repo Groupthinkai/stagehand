@@ -3,6 +3,7 @@ import {
   AgentExecuteOptions,
   AgentResult,
   AgentExecutionOptions,
+  AgentAction,
 } from "@/types/agent";
 import { AgentClient } from "./AgentClient";
 
@@ -11,12 +12,16 @@ import { AgentClient } from "./AgentClient";
  * This class provides methods for executing tasks with an agent
  */
 export class StagehandAgent {
-  public client: AgentClient;
+  private client: AgentClient;
   private logger: (message: LogLine) => void;
 
   constructor(client: AgentClient, logger: (message: LogLine) => void) {
     this.client = client;
     this.logger = logger;
+  }
+
+  setActionHandler(handler: (action: AgentAction) => Promise<void>): void {
+    this.client.setActionHandler(handler);
   }
 
   async execute(

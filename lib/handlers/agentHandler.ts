@@ -19,6 +19,7 @@ export class StagehandAgentHandler {
   private logger: (message: LogLine) => void;
   private agentClient: AgentClient;
   private options: AgentHandlerOptions;
+  public setActionHandler: (handler: (action: AgentAction) => Promise<void>) => void;
 
   constructor(
     stagehandPage: StagehandPage,
@@ -47,6 +48,11 @@ export class StagehandAgentHandler {
 
     // Create agent with the client
     this.agent = new StagehandAgent(client, logger);
+    
+    // Set initial actionHandler if provided in options
+    if (options.actionHandler) {
+      this.setActionHandler(options.actionHandler);
+    }
   }
 
   private setupAgentClient(): void {
@@ -60,55 +66,66 @@ export class StagehandAgentHandler {
     });
 
     // Set up action handler for any client type
-    this.agentClient.setActionHandler(async (action) => {
-      // Default delay between actions (1 second if not specified)
-      const defaultDelay = 1000;
-      // Use specified delay or default
-      const waitBetweenActions =
-        (this.options.clientOptions?.waitBetweenActions as number) ||
-        defaultDelay;
-
-      try {
-        // Try to inject cursor before each action
-        try {
-          await this.injectCursor();
-        } catch {
-          // Ignore cursor injection failures
+    this.setActionHandler = (customHandler?: (action: AgentAction) => Promise<void>) => {
+      this.agentClient.setActionHandler(async (action) => {
+        // If a custom handler was provided, use it instead of the default
+        if (customHandler) {
+          await customHandler(action);
+          return;
         }
+        
+        // Default delay between actions (1 second if not specified)
+        const defaultDelay = 1000;
+        // Use specified delay or default
+        const waitBetweenActions =
+          (this.options.clientOptions?.waitBetweenActions as number) ||
+          defaultDelay;
 
-        // Add a small delay before the action for better visibility
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Execute the action
-        await this.executeAction(action);
-
-        // Add a delay after the action for better visibility
-        await new Promise((resolve) => setTimeout(resolve, waitBetweenActions));
-
-        // After executing an action, take a screenshot
         try {
-          await this.captureAndSendScreenshot();
+          // Try to inject cursor before each action
+          try {
+            await this.injectCursor();
+          } catch {
+            // Ignore cursor injection failures
+          }
+
+          // Add a small delay before the action for better visibility
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          // Execute the action
+          await this.executeAction(action);
+
+          // Add a delay after the action for better visibility
+          await new Promise((resolve) => setTimeout(resolve, waitBetweenActions));
+
+          // After executing an action, take a screenshot
+          try {
+            await this.captureAndSendScreenshot();
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            this.logger({
+              category: "agent",
+              message: `Warning: Failed to take screenshot after action: ${errorMessage}. Continuing execution.`,
+              level: 1,
+            });
+            // Continue execution even if screenshot fails
+          }
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
           this.logger({
             category: "agent",
-            message: `Warning: Failed to take screenshot after action: ${errorMessage}. Continuing execution.`,
-            level: 1,
+            message: `Error executing action ${action.type}: ${errorMessage}`,
+            level: 0,
           });
-          // Continue execution even if screenshot fails
+          throw error; // Re-throw the error to be handled by the caller
         }
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        this.logger({
-          category: "agent",
-          message: `Error executing action ${action.type}: ${errorMessage}`,
-          level: 0,
-        });
-        throw error; // Re-throw the error to be handled by the caller
-      }
-    });
+      });
+    };
+    
+    // Set the default action handler
+    this.setActionHandler(undefined);
 
     // Update viewport and URL for any client type
     this.updateClientViewport();

@@ -33,7 +33,7 @@ import { LLMClient } from "./llm/LLMClient";
 import { LLMProvider } from "./llm/LLMProvider";
 import { isRunningInBun } from "./utils";
 import { ApiResponse, ErrorResponse } from "@/types/api";
-import { AgentExecuteOptions, AgentResult } from "../types/agent";
+import { AgentAction, AgentExecuteOptions, AgentResult } from "../types/agent";
 import { StagehandAgentHandler } from "./handlers/agentHandler";
 import { StagehandOperatorHandler } from "./handlers/operatorHandler";
 import { StagehandLogger } from "./logger";
@@ -792,6 +792,9 @@ export class Stagehand {
    * @returns An agent instance with execute() method
    */
   agent(options?: AgentConfig): {
+    setActionHandler?: (
+      handler: (action: AgentAction) => Promise<void>,
+    ) => void;
     execute: (
       instructionOrOptions: string | AgentExecuteOptions,
     ) => Promise<AgentResult>;
@@ -821,6 +824,7 @@ export class Stagehand {
       You are currently on the following page: ${this.stagehandPage.page.url()}.
       Do not ask follow up questions, the user will trust your judgement.`,
         agentType: options.provider,
+        actionHandler: options.actionHandler
       },
     );
 
@@ -831,6 +835,9 @@ export class Stagehand {
     });
 
     return {
+      setActionHandler: (handler: (action: AgentAction) => Promise<void>) => {
+        agentHandler.setActionHandler(handler);
+      },
       execute: async (instructionOrOptions: string | AgentExecuteOptions) => {
         const executeOptions: AgentExecuteOptions =
           typeof instructionOrOptions === "string"
